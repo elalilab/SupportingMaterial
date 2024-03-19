@@ -1,0 +1,174 @@
+---
+title-block-banner: true
+title: "Analysis of brain reperfusion"
+date: today
+date-format: full
+author: 
+  - name: "Daniel Manrique-Castano"
+    orcid: 0000-0002-1912-1764
+    affiliation: Univerisity Laval (Laboratory of neurovascular interactions) 
+keywords: 
+  - Stroke
+  - Brain reperfusion
+  - PDGF-D
+  - Brain pericytes
+   
+license: "CC BY"
+
+format:
+   pdf: 
+    toc: true
+    number-sections: true
+    colorlinks: true
+   html:
+    code-fold: true
+    embed-resources: true
+    toc: true
+    toc-depth: 2
+    toc-location: left
+    number-sections: true
+    theme: spacelab
+
+knitr:
+  opts_chunk: 
+    warning: false
+    message: false
+---
+
+# Load libraries and themes
+
+We load required libraries and visual themes
+
+```{r}
+library(jtools)
+library(ggplot2)
+library(interactions)
+library(dplyr)
+library(tidyr)
+library(ggdist)
+library(ggplot2)
+library(broom)
+library(distributional)
+library(patchwork)
+
+Plot_theme <- theme_classic() +
+  theme(
+      plot.title = element_text(size=18, hjust = 0.5, face="bold"),
+      plot.subtitle = element_text(size = 10, color = "black"),
+      plot.caption = element_text(size = 12, color = "black"),
+      axis.line = element_line(colour = "black", linewidth = 1, linetype = "solid"),
+      axis.ticks.length=unit(3,"pt"),
+     
+      axis.title.x = element_text(colour = "black", size = 16),
+      axis.text.x = element_text(colour = "black", size = 16, angle = 0, hjust = 0.5),
+      axis.ticks.x = element_line(colour = "black", linewidth = 1),
+      
+      axis.title.y = element_text(colour = "black", size = 18),
+      axis.text.y = element_text(colour = "black", size = 16),
+      axis.ticks.y = element_line(colour = "black", linewidth = 1),
+      
+      legend.position="right",
+      legend.direction="vertical",
+      legend.title = element_text(colour="black", face="bold", size=12),
+      legend.text = element_text(colour="black", size=10),
+      
+      plot.margin = margin(t = 10,  # Top margin
+                             r = 2,  # Right margin
+                             b = 10,  # Bottom margin
+                             l = 10) # Left margin
+      ) 
+```
+
+# Load the data
+
+We load the `2024_Stroke_Pdgfd/Speckle.csv` dataset containing the laser speckle measurements of brain reperfusion performed at baseline, 1 and 7 days after stroke. Subsequently, we subset the dataset to perform linear regression for baseline (0) and 1 Day after stroke, and another for baseline (0) and 7 days after stroke.
+
+```{r}
+# Load the dataset
+Data <- read.csv("D:/Research/Support_EAE/2024_Stroke_Pdgfd/Data/Speckle.csv", header = TRUE)
+
+# Setup factors
+Data$Group <- factor(Data$Group, levels = c("VEH", "P250"))
+Data$Time_fac <- factor(Data$Time_fac, levels = c("5min", "24h", "1W"))
+
+# Subset the data
+Data_subA <- Data[Data$Time != "1", ]
+Data_subB <- Data[Data$Time != "7", ]
+
+head(Data_subA)
+```
+From the dataset, we are interested in the `Group` variable, denoting the vehicle (VEH) and treatment of 250 rh-PDGF-D ng/kg group (P250). This treatment is intended to increase PDGF-D levels. The `Time` variable denotes reperfusion measurements at baseline (0), 1 and 7 days after stroke. Finally, the `Contra_Ipsi` variable represents the ratio between ipsilateral and contralateral hemispheres for reperfusion.
+
+# Fitting the linear models
+
+Next, we fit two separate linear models for the subsets using the standard `lm` function.
+
+```{r}
+# For 0-1 DAY
+fit1 <- lm(Contra_Ipsi ~ Time*Group, data = Data_subB) 
+
+# For 0-7 DAY
+fit2 <- lm(Contra_Ipsi ~ Time*Group, data = Data_subA) 
+```
+
+# Summary results
+
+We visualize the results using the `summary` function
+
+```{r}
+summary(fit1)
+
+summary(fit2)
+```
+The tables show the estimated parameters for each model. The `Intercept` denotes the value for vehicle animals at baseline. `Time` represent the effect (slope) of time (1 or 7 days) for the vehicle animals. `Group250` is the effect of the intervention at baseline, whereas `Time:GroupP250`indicates the difference in slopes between Genotypes from baseline to 1 or 7 days. 
+
+# Visualization of results
+
+Here we use the `interact_plot` function from the `interactions` package to plot the estimated intercepts and slopes. The graphs are then saved in designed locations and available in the repository.
+
+```{r}
+fit1_fig <- interact_plot(fit1, 
+                          pred = 
+                          Time, 
+                          modx = Group, 
+                          interval = TRUE,
+                          int.width = 0.95, 
+                          colors = c("red", "blue")) +
+
+scale_y_continuous(name = "Brain perfusion",
+                   limits = c(30,50)) +
+scale_x_continuous(name = "Days",
+                   breaks = c(0, 1)) +
+Plot_theme
+
+ggsave(
+plot     = fit1_fig, 
+filename = "Plots/Fit1.png", 
+width    = 12, 
+height   = 9, 
+units    = "cm")
+
+fit2_fig <- interact_plot(fit2, 
+                          pred = Time, 
+                          modx = Group, 
+                          interval = TRUE,
+                          int.width = 0.95, 
+                          colors = c("red", "blue")) +
+
+scale_y_continuous(name = "Brain perfusion",
+                   limits = c(30,50)) +
+scale_x_continuous(name = "Days",
+                   breaks = c(0, 7)) +
+
+Plot_theme
+
+ggsave(
+plot     = fit2_fig, 
+filename = "Plots/Fit2.png", 
+width    = 12, 
+height   = 9, 
+units    = "cm")
+
+fit1_fig | fit2_fig
+```
+
