@@ -81,7 +81,7 @@ Plot_theme <- theme_classic() +
 
 # Load the data
 
-We load the `2024_Stroke_Pdgfd/Speckle.csv` dataset containing the laser speckle measurements of brain reperfusion performed at baseline, 1 and 7 days after stroke. Subsequently, we subset the dataset to perform linear regression for baseline (0) and 1 Day after stroke, and another for baseline (0) and 7 days after stroke.
+We load the `2024_Stroke_Pdgfd/Speckle.csv' dataset containing the laser speckle measurements of brain reperfusion performed at baseline, 1 and 7 days after stroke. We then subset the dataset to perform linear regression for baseline (0) and 1 day after stroke, and another for baseline (0) and 7 days after stroke.
 
 ```{r}
 # Load the dataset
@@ -97,11 +97,11 @@ Data_subB <- Data[Data$Time != "7", ]
 
 head(Data_subA)
 ```
-From the dataset, we are interested in the `Group` variable, denoting the vehicle (VEH) and treatment of 250 rh-PDGF-D ng/kg group (P250). This treatment is intended to increase PDGF-D levels. The `Time` variable denotes reperfusion measurements at baseline (0), 1 and 7 days after stroke. Finally, the `Contra_Ipsi` variable represents the ratio between ipsilateral and contralateral hemispheres for reperfusion.
+From the dataset, we are interested in the 'Group' variable, which denotes the vehicle (VEH) and the 250 rh-PDGF-D ng/kg treatment group (P250). This treatment is intended to increase PDGF-D levels. The `Time` variable denotes reperfusion measurements at baseline (0), 1 and 7 days after stroke. Finally, the `Contra_Ipsi` variable represents the ratio between ipsilateral and contralateral hemispheres for reperfusion.
 
 # Fitting the linear models
 
-Next, we fit two separate linear models for the subsets using the standard `lm` function.
+Next, we fit two separate linear models for the subsets using the standard `lm` function:
 
 ```{r}
 # For 0-1 DAY
@@ -120,13 +120,21 @@ summary(fit1)
 
 summary(fit2)
 ```
-The tables show the estimated parameters for each model. The `Intercept` denotes the value for vehicle animals at baseline. `Time` represent the effect (slope) of time (1 or 7 days) for the vehicle animals. `Group250` is the effect of the intervention at baseline, whereas `Time:GroupP250`indicates the difference in slopes between Genotypes from baseline to 1 or 7 days. 
+The tables show the estimated parameters for each model. The 'intercept' represents the value for the vehicle animals at baseline. Time' represents the effect (slope) of time (1 or 7 days) for the vehicle animals. Group250 is the effect of the intervention at baseline, while Time:GroupP250 is the difference in slope between genotypes from baseline to 1 or 7 days. 
 
 # Visualization of results
 
-Here we use the `interact_plot` function from the `interactions` package to plot the estimated intercepts and slopes. The graphs are then saved in designed locations and available in the repository.
+Here we use the `interact_plot` function from the `interactions` package to plot the estimated intercepts and slopes. The plots are then stored in the designed locations and are available in the repository.
 
 ```{r}
+#| label: fig-Graphs
+#| include: true
+#| warning: false
+#| message: false
+#| results: false
+#| fig-height: 5
+#| fig-width: 10
+
 fit1_fig <- interact_plot(fit1, 
                           pred = 
                           Time, 
@@ -172,3 +180,8 @@ units    = "cm")
 fit1_fig | fit2_fig
 ```
 
+@fig-Graphs shows the results for the regression of baseline - 1 day (left) and baseline - 7 days (right).
+
+```{r}
+sessionInfo()
+```
